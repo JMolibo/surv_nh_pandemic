@@ -72,14 +72,6 @@ summary(m1)
 confint(m1) |> 
   exp()
 
-tidy_coxme(m1) |> 
-  flyCSV::flyCSV()
-
-surv_residencia |> 
-  flyCSV::flyCSV()
-
-
-load('data/comprueba_github.RData')
 
 data |> 
   flyCSV::flyCSV()

@@ -6,6 +6,16 @@ library(coxme)
 
 rm(list = ls())
 
+# Load necessary data
+# fec_alta: day nursing home admission
+# fec_baja: day nursing home exit (death or other reason)
+# futime: follow up time
+# exitus: death from all causes
+# exitus_otro: death from all causes except COVID-19
+# edad: age 
+# sexo: biological sex
+# id_residencia: nursing home id
+
 load('data/personas.RData')
 
 personas2 <- personas |> 
@@ -19,10 +29,12 @@ personas2 <- personas |>
                                fec_alta <= '2021-12-26' & fec_baja > '2021-02-22' & fec_baja > as.Date('2021-12-26') ~ as.integer(as.Date('2021-12-26') - fec_alta), 
                                TRUE ~ NA_integer_), 
          tperiodo4 = if_else(fec_baja > '2021-12-26', as.integer(fec_baja - fec_alta), NA_integer_)) |> 
-  mutate(tperiodo1 = if_else(tperiodo1 == 0, tperiodo1 + 0.5, tperiodo1), 
+  mutate(tperiodo1 = if_else(tperiodo1 == 0, tperiodo1 + 0.5, tperiodo1), # If death occurs on the same day as admission, add 0.5 days to the length of stay
          tperiodo2 = if_else(tperiodo2 == 0, tperiodo2 + 0.5, tperiodo2), 
          tperiodo3 = if_else(tperiodo3 == 0, tperiodo3 + 0.5, tperiodo3), 
          tperiodo4 = if_else(tperiodo4 == 0, tperiodo4 + 0.5, tperiodo4))
+
+# Create the dataset for the analysis
 
 tmer_personas <- tmerge(personas2, 
                         personas2, 
@@ -56,7 +68,7 @@ surv_residencia <- tmer_personas |>
                                      'COVID-19 Prevacunal', 
                                      'COVID-19 Postvacunal', 
                                      'COVID-19 Postvacunal-Ómicron')), 
-         edadt = edad + tstart/365.25) |> 
+         edadt = edad + tstart/365.25) |> # Create age as dependent time covariate
   select(id, fec_alta, fec_baja, 
          edad, edadt, sexo, 
          futime, exitus, exitus_otro, 
@@ -71,8 +83,3 @@ summary(m1)
 
 confint(m1) |> 
   exp()
-
-
-data |> 
-  flyCSV::flyCSV()
-
